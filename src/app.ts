@@ -16,30 +16,24 @@ export async function createApp() {
   const app: Application = express();
   const server = http.createServer(app);
 
-  // Allow multiple origins
   const allowedOrigins = [
-    process.env.WEB_URL || "http://localhost:3000",
-    process.env.MOBILE_URL || "exp://localhost:8081",
+    "https://bid-press.vercel.app",
     "http://localhost:3000",
-    "https://localhost:3000",
-  ].filter(Boolean);
+    "http://localhost:8081",
+    process.env.WEB_URL,
+    process.env.MOBILE_URL,
+  ].filter((o): o is string => Boolean(o));
 
-  app.use(
-    helmet({
-      crossOriginResourcePolicy: { policy: "cross-origin" },
-    }),
-  );
+  app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
   app.use(
     cors({
       origin: (origin, callback) => {
-        // Allow requests with no origin (mobile apps, curl)
         if (!origin) return callback(null, true);
         if (allowedOrigins.includes(origin)) return callback(null, true);
-        // Allow any vercel.app subdomain
         if (origin.endsWith(".vercel.app")) return callback(null, true);
-        // Allow any onrender.com subdomain
         if (origin.endsWith(".onrender.com")) return callback(null, true);
+        logger.warn(`CORS blocked: ${origin}`);
         callback(new Error(`CORS: ${origin} not allowed`));
       },
       credentials: true,
@@ -71,7 +65,11 @@ export async function createApp() {
   if (process.env.NODE_ENV === "development") app.use(morgan("dev"));
 
   app.get("/health", (_req, res) =>
-    res.json({ status: "ok", timestamp: new Date() }),
+    res.json({
+      status: "ok",
+      timestamp: new Date(),
+      env: process.env.NODE_ENV,
+    }),
   );
 
   registerRoutes(app);
