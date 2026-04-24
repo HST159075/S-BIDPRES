@@ -1,0 +1,10 @@
+import { Router } from "express";
+import { authenticate } from "../middleware/authenticate";
+import * as ctrl from "../controllers/payment.controller";
+export const paymentRoutes = Router();
+paymentRoutes.post("/initiate", authenticate, ctrl.initiatePayment);
+paymentRoutes.post("/webhook/ssl/success", ctrl.sslSuccess);
+paymentRoutes.post("/webhook/ssl/fail", ctrl.sslFail);
+paymentRoutes.get("/webhook/bkash", ctrl.bkashCallback);
+paymentRoutes.post("/confirm-delivery", authenticate, ctrl.confirmDelivery);
+paymentRoutes.get("/history", authenticate, ctrl.getPaymentHistory);

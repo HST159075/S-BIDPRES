@@ -1,0 +1,304 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  buyer
+  seller
+  admin
+}
+
+enum SellerApplicationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum ProductCondition {
+  new
+  used
+  refurbished
+}
+
+enum ProductCategory {
+  electronics
+  fashion
+  home
+  vehicle
+  sports
+  books
+  other
+}
+
+enum ListingStatus {
+  draft
+  active
+  ended
+  cancelled
+}
+
+enum AuctionStatus {
+  scheduled
+  live
+  ended
+  cancelled
+}
+
+enum BidStatus {
+  active
+  outbid
+  won
+  refunded
+}
+
+enum PaymentGateway {
+  sslcommerz
+  bkash
+}
+
+enum PaymentStatus {
+  pending
+  held
+  released
+  refunded
+  failed
+}
+
+enum NotificationType {
+  bid_placed
+  outbid
+  auction_won
+  auction_ended
+  payment_reminder
+  payment_received
+
+  seller_approved
+  seller_rejected
+  strike_added
+  account_banned
+  delivery_confirmed
+}
+
+enum StrikeReason {
+  non_payment
+  fraudulent_bid
+  admin_manual
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String?   @unique
+  phone         String?   @unique
+  emailVerified Boolean   @default(false)
+  phoneVerified Boolean   @default(false)
+  password      String
+  role          Role      @default(buyer)
+  avatar        String?
+  purchaseCount Int       @default(0)
+  strikeCount   Int       @default(0)
+  isBanned      Boolean   @default(false)
+  bannedAt      DateTime?
+  bannedReason  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions Session[]
+  accounts Account[]
+
+  sellerApplication SellerApplication?
+  listings          Listing[]
+  bids              Bid[]
+  payments          Payment[]
+  strikes           Strike[]
+  strikesGiven      Strike[]           @relation("StrikeGivenBy")
+  notifications     Notification[]
+  otps              OTP[]
+
+  @@map("users")
+}
+
+model Account {
+  id                    String    @id @default(uuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String? // Better Auth stores the hashed password here
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("accounts")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model OTP {
+  id        String   @id @default(uuid())
+  userId    String?
+  target    String
+  code      String
+  type      String
+  verified  Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("otps")
+}
+
+model Verification {
+  id         String    @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verifications")
+}
+
+model SellerApplication {
+  id              String                  @id @default(uuid())
+  userId          String                  @unique
+  status          SellerApplicationStatus @default(pending)
+  idCardUrl       String
+  profilePhotoUrl String
+  reviewedBy      String?
+  rejectionReason String?
+  reviewedAt      DateTime?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("seller_applications")
+}
+
+model Listing {
+  id           String            @id @default(uuid())
+  sellerId     String
+  status       ListingStatus     @default(draft)
+  title        String            @db.VarChar(150)
+  description  String            @db.VarChar(3000)
+  category     ProductCategory
+  condition    ProductCondition?
+  brand        String?
+  photos       String[]
+  videoUrl     String
+  location     String
+  shippingCost Decimal           @db.Decimal(10, 2)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  seller       User              @relation(fields: [sellerId], references: [id])
+  auction      Auction?
+
+  @@map("listings")
+}
+
+model Auction {
+  id            String        @id @default(uuid())
+  listingId     String        @unique
+  status        AuctionStatus @default(scheduled)
+  startingPrice Decimal       @db.Decimal(10, 2)
+  bidIncrement  Decimal       @db.Decimal(10, 2)
+  currentPrice  Decimal       @db.Decimal(20, 2)
+  startTime     DateTime
+  endTime       DateTime
+  winnerId      String?
+  finalPrice    Decimal?      @db.Decimal(10, 2)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  listing       Listing       @relation(fields: [listingId], references: [id])
+  bids          Bid[]
+
+  @@map("auctions")
+}
+
+model Bid {
+  id        String    @id @default(uuid())
+  auctionId String
+  bidderId  String
+  status    BidStatus @default(active)
+  amount    Decimal   @db.Decimal(10, 2)
+  isAutoBid Boolean   @default(false)
+  maxAmount Decimal?  @db.Decimal(10, 2)
+  createdAt DateTime  @default(now())
+  auction   Auction   @relation(fields: [auctionId], references: [id])
+  bidder    User      @relation(fields: [bidderId], references: [id])
+  payment   Payment?
+
+  @@map("bids")
+}
+
+model Payment {
+  id              String         @id @default(uuid())
+  bidId           String         @unique
+  userId          String
+  status          PaymentStatus  @default(pending)
+  gateway         PaymentGateway
+  totalAmount     Decimal        @db.Decimal(10, 2)
+  platformFee     Decimal        @db.Decimal(10, 2)
+  sellerAmount    Decimal        @db.Decimal(10, 2)
+  transactionId   String?        @unique
+  gatewayResponse Json?
+  paidAt          DateTime?
+  releasedAt      DateTime?
+  refundedAt      DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  bid             Bid            @relation(fields: [bidId], references: [id])
+  user            User           @relation(fields: [userId], references: [id])
+
+  @@map("payments")
+}
+
+model Strike {
+  id          String       @id @default(uuid())
+  userId      String
+  reason      StrikeReason
+  description String?
+  addedById   String
+  createdAt   DateTime     @default(now())
+  user        User         @relation(fields: [userId], references: [id])
+  addedBy     User         @relation("StrikeGivenBy", fields: [addedById], references: [id])
+
+  @@map("strikes")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  data      Json?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
