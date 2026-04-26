@@ -3,7 +3,7 @@ import * as listingSvc from "../services/listing.service";
 import { sendSuccess, sendPaginated } from "../lib/response";
 import {
   createListingSchema,
-  updateListingSchema,
+  
 } from "../validators/listing.validator";
 
 const qs = (val: unknown): string => {
@@ -71,18 +71,18 @@ export const updateListing = async (
   next: NextFunction,
 ) => {
   try {
-    const body = updateListingSchema.parse(req.body);
+    // updateListingSchema বাদ — সরাসরি req.body নিন
+    // কারণ schema-তে auction fields নেই
     const listing = await listingSvc.updateListing(
       req.params.id as string,
       req.user!.id,
-      body,
+      req.body,
     );
     sendSuccess(res, listing, "Listing updated.");
   } catch (err) {
     next(err);
   }
 };
-
 export const deleteListing = async (
   req: Request,
   res: Response,

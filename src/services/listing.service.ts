@@ -94,6 +94,7 @@ export async function getListingById(id: string) {
     throw Object.assign(new Error("Listing not found."), { statusCode: 404 });
   return l;
 }
+
 export async function updateListing(
   id: string,
   sellerId: string,
@@ -109,8 +110,31 @@ export async function updateListing(
     throw Object.assign(new Error("Cannot update ended listing."), {
       statusCode: 400,
     });
-  return prisma.listing.update({ where: { id }, data: input });
+
+  const { startingPrice, bidIncrement, startTime, endTime, ...listingData } = input;
+
+  // Listing update
+  const updated = await prisma.listing.update({
+    where: { id },
+    data: listingData,
+  });
+
+  // Auction update আলাদাভাবে
+  if (startingPrice !== undefined || bidIncrement !== undefined || startTime || endTime) {
+    await prisma.auction.updateMany({
+      where: { listingId: id },
+      data: {
+        ...(startingPrice !== undefined && { startingPrice, currentPrice: startingPrice }),
+        ...(bidIncrement !== undefined && { bidIncrement }),
+        ...(startTime && { startTime: new Date(startTime) }),
+        ...(endTime && { endTime: new Date(endTime) }),
+      },
+    });
+  }
+
+  return updated;
 }
+
 export async function deleteListing(
   id: string,
   sellerId: string,
