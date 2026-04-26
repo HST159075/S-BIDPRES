@@ -62,7 +62,8 @@ export const getMyBids = async (
   try {
     const page = Number(qs(req.query.page)) || 1;
     const limit = Number(qs(req.query.limit)) || 20;
-    const result = await bidSvc.getAuctionBids(req.user!.id, page, limit);
+    // ✅ getAuctionBids → getUserBids
+    const result = await bidSvc.getUserBids(req.user!.id, page, limit);
     sendPaginated(res, result.data, result.total, result.page, result.limit);
   } catch (err) {
     next(err);

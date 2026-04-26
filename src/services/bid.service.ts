@@ -79,6 +79,7 @@ export async function placeBid(bidderId: string, input: PlaceBidInput) {
   return bid;
 }
 
+
 async function triggerAutoBids(
   auctionId: string,
   lastBidderId: string,
@@ -101,6 +102,27 @@ async function triggerAutoBids(
         .emit("bid:outbid", { newAmount: lastAmount, auctionId });
     }
   }
+}
+
+export async function getUserBids(userId: string, page = 1, limit = 20) {
+  const skip = (page - 1) * limit;
+  const [data, total] = await prisma.$transaction([
+    prisma.bid.findMany({
+      where: { bidderId: userId },
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+      include: {
+        auction: {
+          include: {
+            listing: { select: { title: true, photos: true } },
+          },
+        },
+      },
+    }),
+    prisma.bid.count({ where: { bidderId: userId } }),
+  ]);
+  return { data, total, page, limit };
 }
 
 export async function setAutoBidConfig(

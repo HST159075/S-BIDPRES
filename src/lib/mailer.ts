@@ -96,7 +96,11 @@ export async function sendSellerApprovedEmail(to: string, name: string) {
 }
 
 // ── NEW: Send Seller Rejected Notification ───────────────────
-export async function sendSellerRejectedEmail(to: string, name: string, reason: string) {
+export async function sendSellerRejectedEmail(
+  to: string,
+  name: string,
+  reason: string,
+) {
   try {
     await transporter.sendMail({
       from: `"BidBD" <${process.env.GMAIL_USER}>`,
@@ -116,7 +120,12 @@ export async function sendSellerRejectedEmail(to: string, name: string, reason: 
 }
 
 // ── Send Auction Winner Notification ─────────────────────────
-export async function sendAuctionWinnerEmail(to: string, name: string, itemTitle: string, amount: number) {
+export async function sendAuctionWinnerEmail(
+  to: string,
+  name: string,
+  itemTitle: string,
+  amount: number,
+) {
   try {
     await transporter.sendMail({
       from: `"BidBD" <${process.env.GMAIL_USER}>`,
@@ -131,14 +140,14 @@ export async function sendAuctionWinnerEmail(to: string, name: string, itemTitle
 
 // ── Send Strike/Ban Notification ─────────────────────────────
 export async function sendStrikeEmail(
-  to: string, 
-  name: string, 
-  strikeCount: number, 
-  reason: string
+  to: string,
+  name: string,
+  strikeCount: number,
+  reason: string,
 ) {
   const isBanned = strikeCount >= 3;
-  const subject = isBanned 
-    ? "Account Banned — BidBD" 
+  const subject = isBanned
+    ? "Account Banned — BidBD"
     : `Strike Issued (${strikeCount}/3) — BidBD`;
 
   try {
@@ -157,9 +166,10 @@ export async function sendStrikeEmail(
             <p><strong>Current Strike Count:</strong> ${strikeCount}/3</p>
           </div>
 
-          ${isBanned 
-            ? "<p>Since you have reached 3 strikes, your account has been permanently banned from BidBD.</p>" 
-            : "<p>Please follow our community guidelines to avoid further strikes. Reaching 3 strikes will result in a permanent ban.</p>"
+          ${
+            isBanned
+              ? "<p>Since you have reached 3 strikes, your account has been permanently banned from BidBD.</p>"
+              : "<p>Please follow our community guidelines to avoid further strikes. Reaching 3 strikes will result in a permanent ban.</p>"
           }
         </div>
       `,
@@ -170,7 +180,13 @@ export async function sendStrikeEmail(
 }
 
 // lib/mailer.ts e add koro (jodi na thake)
-export async function sendOutbidEmail(to: string, name: string, title: string, amount: number, id: string) {
+export async function sendOutbidEmail(
+  to: string,
+  name: string,
+  title: string,
+  amount: number,
+  id: string,
+) {
   try {
     await transporter.sendMail({
       from: `"BidBD" <${process.env.GMAIL_USER}>`,
@@ -178,10 +194,18 @@ export async function sendOutbidEmail(to: string, name: string, title: string, a
       subject: `Outbid: ${title}`,
       html: `<p>Hello ${name}, someone just bid ৳${amount.toLocaleString()} on ${title}. Bid again to win!</p>`,
     });
-  } catch (error) { logger.warn({ error }, "Outbid email failed"); }
+  } catch (error) {
+    logger.warn({ error }, "Outbid email failed");
+  }
 }
 
-export async function sendAuctionWonEmail(to: string, name: string, title: string, amount: number, id: string) {
+export async function sendAuctionWonEmail(
+  to: string,
+  name: string,
+  title: string,
+  amount: number,
+  id: string,
+) {
   try {
     await transporter.sendMail({
       from: `"BidBD" <${process.env.GMAIL_USER}>`,
@@ -189,16 +213,18 @@ export async function sendAuctionWonEmail(to: string, name: string, title: strin
       subject: `Congratulations! You won ${title}`,
       html: `<h2>You won!</h2><p>Final Price: ৳${amount.toLocaleString()}</p>`,
     });
-  } catch (error) { logger.warn({ error }, "Winner email failed"); }
+  } catch (error) {
+    logger.warn({ error }, "Winner email failed");
+  }
 }
 
 // lib/mailer.ts e add koro
 export async function sendPaymentReminderEmail(
-  to: string, 
-  name: string, 
-  title: string, 
-  auctionId: string, 
-  hoursLeft: number
+  to: string,
+  name: string,
+  title: string,
+  auctionId: string,
+  hoursLeft: number,
 ) {
   try {
     await transporter.sendMail({
