@@ -56,7 +56,7 @@ export async function sendSellerApplicationEmail(data: {
   profilePhotoUrl: string;
   reviewLink: string;
 }) {
-  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@bidbd.com";
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "hsttasin90@gmail.com";
   try {
     await transporter.sendMail({
       from: `"BidBD" <${process.env.GMAIL_USER}>`,
@@ -76,7 +76,6 @@ export async function sendSellerApplicationEmail(data: {
   }
 }
 
-// ── NEW: Send Seller Approved Notification ───────────────────
 export async function sendSellerApprovedEmail(to: string, name: string) {
   try {
     await transporter.sendMail({
@@ -95,7 +94,6 @@ export async function sendSellerApprovedEmail(to: string, name: string) {
   }
 }
 
-// ── NEW: Send Seller Rejected Notification ───────────────────
 export async function sendSellerRejectedEmail(
   to: string,
   name: string,
@@ -119,7 +117,6 @@ export async function sendSellerRejectedEmail(
   }
 }
 
-// ── Send Auction Winner Notification ─────────────────────────
 export async function sendAuctionWinnerEmail(
   to: string,
   name: string,
@@ -138,7 +135,7 @@ export async function sendAuctionWinnerEmail(
   }
 }
 
-// ── Send Strike/Ban Notification ─────────────────────────────
+
 export async function sendStrikeEmail(
   to: string,
   name: string,
