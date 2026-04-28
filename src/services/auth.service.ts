@@ -48,16 +48,25 @@ export async function sendOTP(
   const key = `${type}:${cleanIdentifier}`;
 
   await setOTP(key, code, 300);
-  console.log(`--- OTP SENT ---`);
-  console.log(`Key: ${key} | Code: ${code}`);
+  console.log(`--- OTP SENT --- Key: ${key} | Code: ${code}`);
 
   if (type === "email") {
     await sendEmailOTP(cleanIdentifier, code, name);
   } else {
+    // ✅ Bangladesh number format fix
+    let phoneNumber = cleanIdentifier;
+    if (phoneNumber.startsWith("01")) {
+      phoneNumber = "+88" + phoneNumber;
+    } else if (phoneNumber.startsWith("8801")) {
+      phoneNumber = "+" + phoneNumber;
+    }
+    
+    console.log(`[Twilio] Sending to: ${phoneNumber}`);
+    
     await tw.messages.create({
-      body: "Your Auction Platform OTP: " + code + ". Valid 5 minutes.",
+      body: `Your BidBD OTP: ${code}. Valid for 5 minutes.`,
       from: process.env.TWILIO_PHONE_NUMBER!,
-      to: cleanIdentifier,
+      to: phoneNumber,
     });
   }
   return { sent: true };
