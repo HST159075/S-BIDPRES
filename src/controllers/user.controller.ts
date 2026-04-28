@@ -88,16 +88,17 @@ export const getMyBids = async (
       skip = (page - 1) * limit;
     const [data, total] = await prisma.$transaction([
       prisma.bid.findMany({
-        where: { bidderId: req.user!.id },
-        skip,
-        take: limit,
-        orderBy: { createdAt: "desc" },
-        include: {
-          auction: {
-            include: { listing: { select: { title: true, photos: true } } },
-          },
-        },
-      }),
+  where: { bidderId: req.user!.id },
+  skip,
+  take: limit,
+  orderBy: { createdAt: "desc" },
+  include: {
+    auction: {
+      include: { listing: { select: { title: true, photos: true } } },
+    },
+    payment: { select: { status: true } }, // ✅ payment status include
+  },
+}),
       prisma.bid.count({ where: { bidderId: req.user!.id } }),
     ]);
     sendPaginated(res, data, total, page, limit);

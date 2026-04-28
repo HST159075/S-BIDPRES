@@ -107,7 +107,7 @@ export async function getPendingApplications(page = 1, limit = 20) {
   return { data, total, page, limit };
 }
 export async function getPlatformAnalytics() {
-  const [u, s, l, a, rev, p] = await prisma.$transaction([
+  const [u, s, l, a, rev, p, strikes, banned, wonAuctions, completedPayments] = await prisma.$transaction([
     prisma.user.count(),
     prisma.user.count({ where: { role: "seller" } }),
     prisma.listing.count(),
@@ -117,6 +117,10 @@ export async function getPlatformAnalytics() {
       _sum: { platformFee: true },
     }),
     prisma.sellerApplication.count({ where: { status: "pending" } }),
+    prisma.strike.count(),
+    prisma.user.count({ where: { isBanned: true } }),
+    prisma.auction.count({ where: { status: "ended", winnerId: { not: null } } }),
+    prisma.payment.count({ where: { status: "released" } }),
   ]);
   return {
     totalUsers: u,
@@ -125,5 +129,9 @@ export async function getPlatformAnalytics() {
     activeAuctions: a,
     totalRevenue: rev._sum.platformFee ?? 0,
     pendingApps: p,
+    totalStrikes: strikes,
+    bannedUsers: banned,
+    wonAuctions,
+    completedPayments,
   };
 }
